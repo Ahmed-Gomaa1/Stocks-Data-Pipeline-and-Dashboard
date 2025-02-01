@@ -18,11 +18,11 @@ default_args = {
 # Move configurations to separate functions for better organization
 def get_snowflake_connection():
     return {
-        "account": "SIOLFVA-VI49207",
-        "user": "AHMEDGOM14",
-        "password": "AhmedGomaa522***",
-        "role": "ACCOUNTADMIN",       
-        "warehouse": "COMPUTE_WH",  
+        "account": "",
+        "user": "",
+        "password": "",
+        "role": "",       
+        "warehouse": "",  
         "database": "STOCKDATA",  
         "schema": "STOCKSTAGING"      
     }
