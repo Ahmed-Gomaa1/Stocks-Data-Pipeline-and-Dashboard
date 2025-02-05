@@ -1,44 +1,33 @@
 from datetime import datetime, timedelta
 from airflow import DAG
-from airflow.operators.python import PythonOperator  # Updated import
+from airflow.operators.python import PythonOperator
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 import yfinance as yf
 import pandas as pd
-from snowflake.snowpark import Session
 
-# Define default arguments
+# Default arguments for the DAG
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
     'email_on_failure': False,
     'email_on_retry': False,
     'retries': 1,
-    'retry_delay': timedelta(minutes=5),
+    'retry_delay': timedelta(minutes=1),
 }
 
-# Move configurations to separate functions for better organization
-def get_snowflake_connection():
-    return {
-        "account": "",
-        "user": "",
-        "password": "",
-        "role": "",       
-        "warehouse": "",  
-        "database": "STOCKDATA",  
-        "schema": "STOCKSTAGING"      
-    }
-
+# Function to get stock data
 def get_stock_data():
     tickers = [
         "AAPL", "MSFT", "AMZN", "GOOGL", "TSLA", "META", "NVDA", "BRK-B", "V", "JNJ",
-        "WMT", "PG", "MA", "UNH", "HD", "DIS", "BAC", "PYPL", "CMCSA", "ADBE",
-        "PFE", "CSCO", "PEP", "ABT", "TMO", "NFLX", "INTC", "ABBV", "COST", "AVGO",
-        "QCOM", "TXN", "CRM", "AMD", "MDT", "NKE", "ORCL", "HON", "LIN", "SBUX",
-        "INTU", "AMGN", "LOW", "BKNG", "CHTR", "GS", "UNP", "CAT", "UPS", "RTX",
+        "WMT", "MA", "UNH", "HD", "DIS", "BAC", "CMCSA", "ADBE",
+        "PFE", "CSCO", "PEP", "ABT", "TMO", "NFLX", "INTC", "ABBV", "COST",
+        "QCOM", "TXN", "CRM", "AMD", "NKE", "ORCL", "HON", "LIN", "SBUX",
+        "INTU", "AMGN", "LOW", "BKNG", "GS", "UNP", "CAT", "UPS", "RTX",
         "BA", "DE", "MMM", "IBM", "GE", "F", "GM", "T", "VZ", "CVX", "XOM",
-        "COP", "SLB", "EOG", "PSX", "MPC", "DVN", "HAL", "KMI", "OXY",
-        "CL", "PG", "KO", "PEP", "PM", "MO", "MDLZ", "STZ", "KHC", "GIS",
-        "SYY", "CAG", "HSY", "CPB", "K", "MCD", "YUM", "SBUX", "DPZ", "CMG",
-        "DRI", "BLMN", "EAT", "DENN", "JACK", "NDLS", "PZZA", "RRGB", "THI"
+        "COP", "SLB", "EOG", "PSX", "MPC", "DVN", "HAL", "OXY",
+        "CL", "KO", "PEP", "PM", "MO", "MDLZ", "STZ", "KHC", "GIS",
+        "SYY", "CAG", "HSY", "CPB", "K", "MCD", "YUM", "SBUX", "DPZ",
+        "DRI", "BLMN", "EAT", "DENN", "JACK", "RRGB"
     ]
 
     ticker_to_name = {
@@ -53,13 +42,11 @@ def get_stock_data():
         "V": "Visa Inc.",
         "JNJ": "Johnson & Johnson",
         "WMT": "Walmart Inc.",
-        "PG": "Procter & Gamble Co.",
         "MA": "Mastercard Inc.",
         "UNH": "UnitedHealth Group Inc.",
         "HD": "The Home Depot Inc.",
         "DIS": "The Walt Disney Company",
         "BAC": "Bank of America Corporation",
-        "PYPL": "PayPal Holdings Inc.",
         "CMCSA": "Comcast Corporation",
         "ADBE": "Adobe Inc.",
         "PFE": "Pfizer Inc.",
@@ -71,12 +58,10 @@ def get_stock_data():
         "INTC": "Intel Corporation",
         "ABBV": "AbbVie Inc.",
         "COST": "Costco Wholesale Corporation",
-        "AVGO": "Broadcom Inc.",
         "QCOM": "Qualcomm Inc.",
         "TXN": "Texas Instruments Inc.",
         "CRM": "Salesforce Inc.",
         "AMD": "Advanced Micro Devices Inc.",
-        "MDT": "Medtronic plc",
         "NKE": "Nike Inc.",
         "ORCL": "Oracle Corporation",
         "HON": "Honeywell International Inc.",
@@ -86,7 +71,6 @@ def get_stock_data():
         "AMGN": "Amgen Inc.",
         "LOW": "Lowe's Companies Inc.",
         "BKNG": "Booking Holdings Inc.",
-        "CHTR": "Charter Communications Inc.",
         "GS": "Goldman Sachs Group Inc.",
         "UNP": "Union Pacific Corporation",
         "CAT": "Caterpillar Inc.",
@@ -110,7 +94,6 @@ def get_stock_data():
         "MPC": "Marathon Petroleum Corporation",
         "DVN": "Devon Energy Corporation",
         "HAL": "Halliburton Company",
-        "KMI": "Kinder Morgan Inc.",
         "OXY": "Occidental Petroleum Corporation",
         "CL": "Colgate-Palmolive Company",
         "KO": "Coca-Cola Company",
@@ -128,16 +111,12 @@ def get_stock_data():
         "MCD": "McDonald's Corporation",
         "YUM": "Yum! Brands Inc.",
         "DPZ": "Domino's Pizza Inc.",
-        "CMG": "Chipotle Mexican Grill Inc.",
         "DRI": "Darden Restaurants Inc.",
         "BLMN": "Bloomin' Brands Inc.",
         "EAT": "Brinker International Inc.",
         "DENN": "Denny's Corporation",
         "JACK": "Jack in the Box Inc.",
-        "NDLS": "Noodles & Company",
-        "PZZA": "Papa John's International Inc.",
-        "RRGB": "Red Robin Gourmet Burgers Inc.",
-        "THI": "Tim Hortons Inc."
+        "RRGB": "Red Robin Gourmet Burgers Inc."
     }
 
     sector_mapping = {
@@ -152,13 +131,11 @@ def get_stock_data():
         "V": "Financials",
         "JNJ": "Health Care",
         "WMT": "Consumer Staples",
-        "PG": "Consumer Staples",
         "MA": "Financials",
         "UNH": "Health Care",
         "HD": "Consumer Discretionary",
         "DIS": "Communication Services",
         "BAC": "Financials",
-        "PYPL": "Financials",
         "CMCSA": "Communication Services",
         "ADBE": "Information Technology",
         "PFE": "Health Care",
@@ -170,12 +147,10 @@ def get_stock_data():
         "INTC": "Information Technology",
         "ABBV": "Health Care",
         "COST": "Consumer Staples",
-        "AVGO": "Information Technology",
         "QCOM": "Information Technology",
         "TXN": "Information Technology",
         "CRM": "Information Technology",
         "AMD": "Information Technology",
-        "MDT": "Health Care",
         "NKE": "Consumer Discretionary",
         "ORCL": "Information Technology",
         "HON": "Industrials",
@@ -185,7 +160,6 @@ def get_stock_data():
         "AMGN": "Health Care",
         "LOW": "Consumer Discretionary",
         "BKNG": "Consumer Discretionary",
-        "CHTR": "Communication Services",
         "GS": "Financials",
         "UNP": "Industrials",
         "CAT": "Industrials",
@@ -209,7 +183,6 @@ def get_stock_data():
         "MPC": "Energy",
         "DVN": "Energy",
         "HAL": "Energy",
-        "KMI": "Energy",
         "OXY": "Energy",
         "CL": "Consumer Staples",
         "KO": "Consumer Staples",
@@ -227,29 +200,22 @@ def get_stock_data():
         "MCD": "Consumer Discretionary",
         "YUM": "Consumer Discretionary",
         "DPZ": "Consumer Discretionary",
-        "CMG": "Consumer Discretionary",
         "DRI": "Consumer Discretionary",
         "BLMN": "Consumer Discretionary",
         "EAT": "Consumer Discretionary",
         "DENN": "Consumer Discretionary",
         "JACK": "Consumer Discretionary",
-        "NDLS": "Consumer Discretionary",
-        "PZZA": "Consumer Discretionary",
-        "RRGB": "Consumer Discretionary",
-        "THI": "Consumer Discretionary"
+        "RRGB": "Consumer Discretionary"
     }
 
-    # Get yesterday's date
     end_date = datetime.today()
-    start_date = end_date - timedelta(days=1)
+    start_date = datetime(2000, 1, 1)
     
-    # Download data
     data = yf.download(tickers, 
-                      start=start_date.strftime('2000-01-01'),
-                      end=end_date.strftime('2025-01-30'), 
-                      group_by="ticker")
+            start=start_date.strftime('%Y-%m-%d'),
+            end=end_date.strftime('%Y-%m-%d'), 
+            group_by="ticker")
     
-    # Process data
     flattened_data = pd.DataFrame()
     for ticker in tickers:
         if ticker in data:
@@ -257,62 +223,66 @@ def get_stock_data():
             ticker_data['Ticker'] = ticker 
             flattened_data = pd.concat([flattened_data, ticker_data])
     
-    # Rename columns
     flattened_data.rename(columns={
         'Date': 'tdate',
-        'Open': 'open',
+        'Open': 'open_price',
         'High': 'high',
         'Low': 'low',
-        'Close': 'close',
+        'Close': 'close_price',
         'Volume': 'volume',
     }, inplace=True)
     
-    # Add company name and sector
     flattened_data['company_name'] = flattened_data['Ticker'].map(ticker_to_name)
     flattened_data['sector'] = flattened_data['Ticker'].map(sector_mapping)
     flattened_data = flattened_data.reset_index(drop=True)
     
     return flattened_data
 
-def load_to_snowflake(**context):
-    # Get the data from the previous task
+def save_to_snowflake(**context):
     flattened_data = context['task_instance'].xcom_pull(task_ids='get_stock_data_task')
+    flattened_data['tdate'] = pd.to_datetime(flattened_data['tdate']).dt.date
     
-    # Create Snowflake session
-    session = Session.builder.configs(get_snowflake_connection()).create()
+    snowflake_hook = SnowflakeHook(snowflake_conn_id="Snowflake_conn")
     
     try:
-        snowpark_df = session.create_dataframe(flattened_data)
-        snowpark_df.write.mode("overwrite").save_as_table("HISTORICAL_STOCKS_PRICES")
-        print("Data successfully saved to Snowflake table HISTORICAL_STOCKS_PRICES.")
+        conn = snowflake_hook.get_conn()
+        from snowflake.connector.pandas_tools import write_pandas
+
+        database ="STOCKDATA"
+        schema = "STOCKSTAGING"
+        
+        success, nchunks, nrows, _ = write_pandas(
+            conn=conn,
+            df=flattened_data,
+            table_name="STOCK_DATA",
+            database=database,
+            schema=schema,
+            auto_create_table=True
+        )
+        
+        print(f"Data successfully saved to Snowflake. Wrote {nrows} rows in {nchunks} chunks.")
     except Exception as e:
         print(f"Error saving data to Snowflake: {e}")
         raise
-    finally:
-        session.close()
-
-# Create the DAG
 with DAG(
     'stock_data_pipeline',
     default_args=default_args,
     description='Daily stock data pipeline',
-    schedule='0 0 * * *',  # Use `schedule` instead of `schedule_interval`
-    start_date=datetime(2025, 1, 31),
+    schedule='0 12 * * *',  # Run daily at 12 PM
+    start_date=datetime(2025, 2, 5), 
     catchup=False,
     tags=['stocks', 'finance'],
 ) as dag:
     
-    # Task 1: Get stock data
     get_data = PythonOperator(
         task_id='get_stock_data_task',
-        python_callable=get_stock_data,  # Remove `provide_context=True`
+        python_callable=get_stock_data,
     )
     
-    # Task 2: Load data to Snowflake
-    load_data = PythonOperator(
-        task_id='load_to_snowflake_task',
-        python_callable=load_to_snowflake,  # Remove `provide_context=True`
+    save_data = PythonOperator(
+        task_id='save_to_snowflake_task',
+        python_callable=save_to_snowflake,
     )
     
-    # Set task dependencies
-    get_data >> load_data
+    get_data >> save_data
+    
