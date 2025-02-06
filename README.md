@@ -30,8 +30,8 @@ This project implements an automated data pipeline that collects historical stoc
 ### 1. Airflow DAG
 - Schedule: Daily at 12 AM UTC
 - Tasks:
-  - `get_stock_data_task`: Fetches and processes stock data
-  - `load_to_snowflake_task`: Loads processed data into Snowflake
+  - `get_data`: Fetches and processes stock data
+  - `save_data`: Loads processed data into Snowflake
 
 ### 2. Data Model
 The pipeline collects and stores the following data points:
