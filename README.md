@@ -11,9 +11,9 @@ This project implements an automated data pipeline that collects historical stoc
 - **Visualization**: Power BI Dashboard
 
 ## Data Coverage
-- **Time Range**: 2000-01-01 to 2025-01-30
-- **Companies**: 96 major publicly traded companies
-- **Records**: 650,000 rows of historical stock data
+- **Time Range**: 2000-01-03 to 2025-02-04
+- **Companies**: 86 major publicly traded companies
+- **Records**: 530,000 rows of historical stock data
 - **Sectors**: 
   - Information Technology
   - Consumer Discretionary
@@ -57,7 +57,7 @@ pip install pandas
 
 ## Power BI Dashboard
 The interactive dashboard provides:
-- Stock price trends analysis
+- Market Overview
 - Sector-wise performance comparison
 - Volume analysis
 - Company-specific detailed views
