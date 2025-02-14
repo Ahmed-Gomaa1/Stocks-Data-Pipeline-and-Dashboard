@@ -11,7 +11,7 @@ This project implements an automated data pipeline that collects historical stoc
 - **Visualization**: Power BI Dashboard
 
 ## Data Coverage
-- **Time Range**: 2000-01-03 to 2025-02-13
+- **Time Range**: 2000-01-03 to Now
 - **Companies**: 86 major publicly traded companies
 - **Records**: 543.3K rows of historical stock data
 - **Sectors**: 
