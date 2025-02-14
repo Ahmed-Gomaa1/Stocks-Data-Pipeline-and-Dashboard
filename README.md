@@ -11,9 +11,9 @@ This project implements an automated data pipeline that collects historical stoc
 - **Visualization**: Power BI Dashboard
 
 ## Data Coverage
-- **Time Range**: 2000-01-03 to 2025-02-04
+- **Time Range**: 2000-01-03 to 2025-02-13
 - **Companies**: 86 major publicly traded companies
-- **Records**: 530,000 rows of historical stock data
+- **Records**: 543.3K rows of historical stock data
 - **Sectors**: 
   - Information Technology
   - Consumer Discretionary
@@ -27,12 +27,10 @@ This project implements an automated data pipeline that collects historical stoc
 
 ## Technical Components
 
-### 1. Airflow DAG
-- Schedule: Daily at 12 AM UTC
-- Tasks:
-  - `get_data`: Fetches and processes stock data
-  - `save_data`: Loads processed data into Snowflake
-
+### 1. Airflow DAGS
+- Schedule: Daily at 12 AM UTC For Dag1 for get data and transformed then loaded in snowflake database
+- Schedule: Daily at 13 AM UTC For Dag2 for load new daily data in fact and dimension tables
+  
 ### 2. Data Model
 The pipeline collects and stores the following data points:
 - Trading Date
