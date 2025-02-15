@@ -41,14 +41,14 @@ Raw Data Table: Stores raw data collected from the API.
 Processed Data Tables: Stores cleaned and transformed data.
 
 Star Schema Tables:
-# Fact Table: FACT_STOCK_PRICES
--Contains metrics like open, high, low, close, adj_close prices, and volume.
--Linked to dimension tables via foreign keys.
+- ### Fact Table: FACT_STOCK_PRICES
+- Contains metrics like open, high, low, close, adj_close prices, and volume.
+- Linked to dimension tables via foreign keys.
 
-# Dimension Tables:
--DIM_DATE: Date-related attributes (e.g., date_sk , trade_data , trade_day, trade_month, trade_year , trade_Quarter).
--DIM_COMPANY: Company-related attributes (e.g., company_sk, sector_sk , company_name).
--DIM_SECTOR : Sector-related attributes (e.g., sector_sk, sector_name).
+- ### Dimension Tables:
+- DIM_DATE: Date-related attributes (e.g., date_sk , trade_data , trade_day, trade_month, trade_year , trade_Quarter).
+- DIM_COMPANY: Company-related attributes (e.g., company_sk, sector_sk , company_name).
+- DIM_SECTOR : Sector-related attributes (e.g., sector_sk, sector_name).
 
 ## Setup Instructions
 
