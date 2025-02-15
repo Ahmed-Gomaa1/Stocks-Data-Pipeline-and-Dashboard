@@ -76,9 +76,6 @@ def update_dim_company(**context) -> None:
             WHERE sd."company_name" IS NOT NULL
         ) AS source
         ON target.Company_Name = source.Company_Name
-        WHEN MATCHED THEN
-            UPDATE SET
-                target.Sector_SK = source.Sector_SK
         WHEN NOT MATCHED THEN
             INSERT (Company_Name, Sector_SK)
             VALUES (source.Company_Name, source.Sector_SK);
@@ -122,14 +119,6 @@ def insert_dim_date(**context) -> None:
             WHERE "Tdate" IS NOT NULL
         ) AS source
         ON target.Trade_Date = source.Trade_Date
-        WHEN MATCHED THEN
-            UPDATE SET
-                target.Trading_Year = source.Trading_Year,
-                target.Trading_Quarter = source.Trading_Quarter,
-                target.Trading_Month = source.Trading_Month,
-                target.Trading_Day = source.Trading_Day,
-                target.Day_of_Week = source.Day_of_Week,
-                target.Is_Weekend = source.Is_Weekend
         WHEN NOT MATCHED THEN
             INSERT (
                 Trade_Date, Trading_Year, Trading_Quarter, Trading_Month,
@@ -197,14 +186,6 @@ def insert_fact_stocks_prices(**context) -> None:
         ) AS source
         ON target.Date_SK = source.Date_SK 
         AND target.Company_SK = source.Company_SK
-        WHEN MATCHED THEN
-            UPDATE SET
-                target.Open_Price = source.Open_Price,
-                target.High_Price = source.High_Price,
-                target.Low_Price = source.Low_Price,
-                target.Close_Price = source.Close_Price,
-                target.Adj_Close = source.Adj_Close,
-                target.NumberofShares_Traded = source.NumberofShares_Traded
         WHEN NOT MATCHED THEN
             INSERT (
                 Date_SK, Company_SK, Open_Price, High_Price, Low_Price,
@@ -234,8 +215,8 @@ with DAG(
     'stock_data_pipeline2',
     default_args=default_args,
     description='Daily stock data pipeline',
-    schedule='0 13 * * *',  
-    start_date=datetime(2025, 2, 9), 
+    schedule='30 22 * * *',  
+    start_date=datetime(2025, 2, 13), 
     catchup=False,
     tags=['stocks', 'finance'],
 ) as dag:
